@@ -11,12 +11,16 @@ This tool encrypts a specified file in-place, using RC4-drop3072 with 256-bit ke
 
 If compiled using g++ -O3, speeds exceeding 250 MB/s can be achieved on a ULV Kaby Lake i7 and SSD.
 
-usage: NanoCryptCore file key
+Use NanoCrypt.py (Python3) to use this tool in an interactive manner.
 
-usage: SaltMaster flag file salt
+usage: NanoCrypt.py [encrypt | decrypt]
 
-Use NanoCrypt.py (Python3) to use this tool in an interactive manner. NanoCrypt.py derives keys, generates salts, and automatically invokes NanoCrypt's C++ sub-tools to complete the encryption process.
+NanoCrypt.py derives keys from user passphrases and generates salts. It automatically invokes NanoCrypt's C++ sub-tools to complete the encryption and decryption process. This is the recommended way to use NanoCrypt.
 
 To use the sub-tools manually, note:
 
-Key must be a hexadecimal string of length 64 (32-bytes/256-bit). Ensure it comes from a properly salted key derivation function. Salt must be a hexadecimal string of length 32 (16-bytes/128-bit). SaltMaster can be used to add/remove salts from newly encrypted/decrypted files. Flags are "add" or "remove".
+"key" must be a hexadecimal string of length 64 (32-bytes/256-bit). Ensure it comes from a properly salted key derivation function. "salt" must be a hexadecimal string of length 32 (16-bytes/128-bit). SaltMaster can be used to add/remove salts from newly encrypted/decrypted files.
+
+usage: NanoCryptCore file key
+
+usage: SaltMaster [add | remove] file [salt]

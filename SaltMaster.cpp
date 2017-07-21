@@ -24,9 +24,9 @@ using namespace std;
 
 int main( int argc, char *argv[])
 {
-  if ( argc != 4)
+  if ( argc != 3 && argc != 4)
   {
-    cerr << "usage: SaltMaster flag file salt" << endl;
+    cerr << "usage: SaltMaster [add | remove] file [salt]" << endl;
     return 1;
   }
 
@@ -35,10 +35,19 @@ int main( int argc, char *argv[])
     cerr << "invalid flag: " << argv[1] << endl;
   }
 
-  if (strlen(argv[3]) != 32)
+  if (strcmp(argv[1], "add") == 0)
   {
-    cerr << "salt is wrong size: " << strlen(argv[3]) << endl;
-    return 1;
+    if (argc != 4)
+    {
+      cerr << "salt must be provided for adding" << endl;
+      return 1;
+    }
+
+    if (strlen(argv[3]) != 32)
+    {
+      cerr << "salt is wrong size: " << strlen(argv[3]) << endl;
+      return 1;
+    }
   }
 
   fstream toModify(argv[2], ios::binary|ios::out|ios::in|ios::ate);
