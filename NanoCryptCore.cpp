@@ -116,11 +116,10 @@ int main( int argc, char *argv[])
   //Start encrypting file  
   long fileSize = toEncrypt.tellg();
   int marker = 0;
+  char* buffer = new char [bufferSize];
 
   while (marker < fileSize)
   {
-    char* buffer = new char [bufferSize];
-
     toEncrypt.seekp(marker, ios::beg);
     toEncrypt.read(buffer, bufferSize);
 
@@ -138,6 +137,7 @@ int main( int argc, char *argv[])
     if ((fileSize - marker) < bufferSize)
     {
       bufferSize = fileSize - marker;
+      buffer = new char [bufferSize];
     }
   }
 
