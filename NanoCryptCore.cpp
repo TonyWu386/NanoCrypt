@@ -1,5 +1,5 @@
 /* 
- * NanoCrypt v0.2
+ * NanoCrypt v0.3
  * 
  * NanoCryptCore.cpp
  * 

@@ -5,9 +5,9 @@ Copyright (c) 2017 [Tony Wu], All Right Reserved
 
 License: GNU GPL v3.0
 
-Version 0.2
+Version 0.3
 
-This tool encrypts a specified file in-place, using RC4-drop3072 with 256-bit keys. Key stretching is provided by PBKDF2-HMAC-SHA512 with 2^18 iterations. 16 bytes of a random salt will be appended to the end of the encrypted file.
+This tool encrypts a specified file in-place, using RC4-drop3072 AEAD with 256-bit keys. Authentication is provided by HMAC-SHA256 in EtM mode. Key stretching is provided by PBKDF2-HMAC-SHA512 with 2^18 iterations. A 32-byte hmac and a 16-byte random salt is located in the footer of a NanoCrypt file.
 
 If compiled using g++ -O3, speeds exceeding 250 MB/s can be achieved on a ULV Kaby Lake i7 and SSD.
 
@@ -19,8 +19,10 @@ NanoCrypt.py derives keys from user passphrases and generates salts. It automati
 
 To use the sub-tools manually, note:
 
-"key" must be a hexadecimal string of length 64 (32-bytes/256-bit). Ensure it comes from a properly salted key derivation function. "salt" must be a hexadecimal string of length 32 (16-bytes/128-bit). SaltMaster can be used to add/remove salts from newly encrypted/decrypted files.
-
 usage: NanoCryptCore file key
 
-usage: SaltMaster [add | remove] file [salt]
+"key" must be a hexadecimal string of length 64 (32-bytes/256-bit). Ensure it comes from a properly salted key derivation function.
+
+usage: usage: SaltMaster [add | remove] [salt | hmac] file [salt]
+
+"salt" must be a hexadecimal string of length 32 (16-bytes/128-bit). "hmac" must be a hexadecimal string of length 64 (32-bytes/256-bit)

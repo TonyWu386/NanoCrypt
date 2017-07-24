@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# NanoCrypt v0.2
+# NanoCrypt v0.3
 # 
 # NanoCrypt.py
 # 
@@ -15,12 +15,13 @@ from os import urandom
 from hashlib import pbkdf2_hmac
 from subprocess import call, Popen, PIPE
 from binascii import hexlify
+import hmac
 
 ENFORCEPASSLEN = 8
 KDFITER = 262144
+BUFFERSIZE = 4096
 
 if __name__ == "__main__":
-
     if (len(argv) != 2 or (argv[1] != "encrypt" and argv[1] != "decrypt")):
         print("usage: NanoCrypt.py [encrypt | decrypt]")
         quit()
@@ -43,28 +44,72 @@ if __name__ == "__main__":
         if (returnCode != 0):
             print("Encryption failed")
             quit()
-
         print("Encryption successful")
 
-        returnCode = call(["./SaltMaster", "add", fileName, hexlify(salt)])
+        print("Generating HMAC, stand by")
+
+        hmacGenerator = hmac.new(key, digestmod="sha256")
+        f = open(fileName, 'rb')
+
+        try:
+          while True:
+            buf = f.read(BUFFERSIZE)
+            if not buf:
+              break
+            hmacGenerator.update(buf)
+        finally:
+          f.close()
+
+        returnCode = call(["./SaltMaster", "add", "hmac", fileName,
+                           hmacGenerator.hexdigest()])
+        if (returnCode != 0):
+            print("HMAC appending failed")
+            quit()
+        print("HMAC appending successful")
+
+        returnCode = call(["./SaltMaster", "add", "salt", fileName,
+                           hexlify(salt)])
         if (returnCode != 0):
             print("Salt appending failed")
             quit()
-
         print("Salt appending successful")
-
     else:
-        process = Popen(["./SaltMaster", "remove", fileName], stdout=PIPE)
-
+        process = Popen(["./SaltMaster", "remove", "salt", fileName],
+                        stdout=PIPE)
         salt = bytes.fromhex(process.communicate()[0].decode("ascii"))
-
         if (process.returncode != 0):
             print("Error getting salt")
             quit()
-
         print("Getting salt successful")
 
+        process = Popen(["./SaltMaster", "remove", "hmac", fileName],
+                        stdout=PIPE)
+        fileHmac = process.communicate()[0].decode("ascii")  
+        if (process.returncode != 0):
+            print("Error getting HMAC")
+            quit()
+        print("Getting HMAC successful")
+
         key = pbkdf2_hmac("sha512", passphrase, salt, KDFITER, 32)
+
+        print("Checking HMAC, stand by")
+
+        hmacGenerator = hmac.new(key, digestmod="sha256")
+        f = open(fileName, 'rb')
+
+        try:
+          while True:
+            buf = f.read(BUFFERSIZE)
+            if not buf:
+              break
+            hmacGenerator.update(buf)
+        finally:
+          f.close()
+
+        if not (hmac.compare_digest(hmacGenerator.hexdigest(), fileHmac)):
+            print("!WARNING HMAC does not match!")
+        else:
+            print("HMAC appears good")
 
         returnCode = call(["./NanoCryptCore", fileName, hexlify(key)])
         if (returnCode != 0):
