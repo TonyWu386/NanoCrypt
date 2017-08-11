@@ -7,7 +7,7 @@ License: GNU GPL v3.0
 
 Version 0.3
 
-This tool encrypts a specified file in-place, using RC4-drop3072 AEAD with 256-bit keys. Authentication is provided by HMAC-SHA256 in EtM mode. Key stretching is provided by PBKDF2-HMAC-SHA512 with 2^18 iterations. A 32-byte hmac and a 16-byte random salt is located in the footer of a NanoCrypt file.
+This tool encrypts a specified file in-place, using VMPC-drop3072 AEAD with 256-bit keys. Authentication is provided by HMAC-SHA256 in EtM mode. Key stretching is provided by PBKDF2-HMAC-SHA512 with 2^18 iterations. A 32-byte hmac and a 16-byte random salt is located in the footer of a NanoCrypt file.
 
 If compiled using g++ -O3, speeds exceeding 250 MB/s can be achieved on a ULV Kaby Lake i7 and SSD.
 

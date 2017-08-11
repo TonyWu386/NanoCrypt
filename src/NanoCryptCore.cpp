@@ -22,20 +22,21 @@ using namespace std;
 class CryptoCore
 {
   private:
-  array<unsigned char, 256> ksa(unsigned char * key);
-  array<unsigned char, 256> mS;
-  short mi;
-  short mj;
+    array<unsigned char, 256> ksa(unsigned char * key);
+    array<unsigned char, 256> mS;
+    short mi;
+    short mj;
+    unsigned char mHold;
 
   public:
-  unsigned char nextByte();
+    unsigned char nextByte();
 
-  CryptoCore(unsigned char * key)
-  {
-    mi = 0;
-    mj = 0;
-    mS = ksa(key);
-  }
+    CryptoCore(unsigned char * key)
+    {
+      mi = 0;
+      mj = 0;
+      mS = ksa(key);
+    }
 };
 
 //Sets the internal state from the key provided as a char array of length 32
@@ -48,11 +49,13 @@ array<unsigned char, 256> CryptoCore::ksa(unsigned char * key)
     S[i] = i;
   }
 
-  short j = 0;
-  for (short i = 0; i < 256; i++)
+  short n;
+
+  for (short m = 0; m < 767; m++)
   {
-    j = (j + S[i] + key[i % 32]) % 256;
-    swap(S[i], S[j]);
+    n = m % 256;
+    mj = S[(mj + S[n] + key[m % 32]) % 256];
+    swap(S[n], S[mj]);
   }
 
   return S;
@@ -62,12 +65,15 @@ array<unsigned char, 256> CryptoCore::ksa(unsigned char * key)
 //Cycles the PRGA one round and returns the next keystream byte
 unsigned char CryptoCore::nextByte()
 {
-  mi = (mi + 1) % 256;
-  mj = (mj + mS[mi]) % 256;
+  mj = mS[(mj + mS[mi]) % 256];
+  
+  mHold = mS[(mS[mS[mj]] + 1) % 256];
 
   swap(mS[mi], mS[mj]);
+  
+  mi = (mi + 1) % 256;
 
-  return mS[(mS[mi] + mS[mj]) % 256];
+  return mHold;
 }
 
 
