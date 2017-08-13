@@ -19,6 +19,7 @@
 
 using namespace std;
 
+
 // This class implements the VMPC stream cipher
 class CryptoCore
 {
@@ -39,6 +40,7 @@ class CryptoCore
       mS = ksa(key, iv, keyLength, ivLength);
     }
 };
+
 
 /**
  * Sets the internal VMPC state array from a key and iv.
@@ -77,6 +79,7 @@ array<unsigned char, 256> CryptoCore::ksa(unsigned char * key, unsigned char * i
   return S;
 }
 
+
 /**
  * Cycles the PRGA one round and returns the next keystream byte.
  * 
@@ -93,6 +96,23 @@ unsigned char CryptoCore::nextByte()
   mi = (mi + 1) % 256;
 
   return mHold;
+}
+
+
+/**
+ * Transforms a hexadecimal string to a char array
+ * 
+ * @param hexPos A pointer to the hexadecimal string
+ * @param outArr A pointer to the output array that will be mutated by this function
+ * @param outArrLength Expected number of chars in the output
+ */
+void hexStringToCharArray(char *hexPos, unsigned char *outArr, short outArrLength)
+{
+  for(short i = 0; i < outArrLength; i++)
+  {
+    sscanf(hexPos, "%2hhx", &outArr[i]);
+    hexPos += 2;
+  }
 }
 
 
@@ -136,21 +156,9 @@ int main( int argc, char *argv[])
   unsigned char key[keyLength];
   unsigned char iv[ivLength];
 
-  // Convert the key and iv from a hexstring to a char array
-  char *posKey = argv[2];
-  char *posIv = argv[3];
-
-  for(short i = 0; i < keyLength; i++)
-  {
-    sscanf(posKey, "%2hhx", &key[i]);
-    posKey += 2;
-  }
-  
-  for(short i = 0; i < ivLength; i++)
-  {
-    sscanf(posIv, "%2hhx", &iv[i]);
-    posIv += 2;
-  }
+  // Convert the key and iv from a hexstring to a char array  
+  hexStringToCharArray(argv[2], key, keyLength);
+  hexStringToCharArray(argv[3], iv, ivLength);
 
   CryptoCore core = CryptoCore(key, iv, keyLength, ivLength);
 
