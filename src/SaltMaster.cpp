@@ -1,5 +1,5 @@
 /* 
- * NanoCrypt v0.3
+ * NanoCrypt v0.4
  * 
  * SaltMaster.cpp
  * 

@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# NanoCrypt v0.3
+# NanoCrypt v0.4
 # 
 # NanoCrypt.py
 # 
@@ -38,9 +38,10 @@ if __name__ == "__main__":
     if (encrypt):
         salt = bytes(urandom(16))
 
-        key = pbkdf2_hmac("sha512", passphrase, salt, KDFITER, 32)
+        key = pbkdf2_hmac("sha512", passphrase, salt, KDFITER, 64)
 
-        returnCode = call(["./NanoCryptCore", fileName, hexlify(key)])
+        returnCode = call(["./NanoCryptCore", fileName, hexlify(key[0:32]),
+                           hexlify(key[32:64])])
         if (returnCode != 0):
             print("Encryption failed")
             quit()
@@ -90,7 +91,7 @@ if __name__ == "__main__":
             quit()
         print("Getting HMAC successful")
 
-        key = pbkdf2_hmac("sha512", passphrase, salt, KDFITER, 32)
+        key = pbkdf2_hmac("sha512", passphrase, salt, KDFITER, 64)
 
         print("Checking HMAC, stand by")
 
@@ -111,7 +112,8 @@ if __name__ == "__main__":
         else:
             print("HMAC appears good")
 
-        returnCode = call(["./NanoCryptCore", fileName, hexlify(key)])
+        returnCode = call(["./NanoCryptCore", fileName, hexlify(key[0:32]),
+                           hexlify(key[32:64])])
         if (returnCode != 0):
             print("Decryption failed")
             quit()

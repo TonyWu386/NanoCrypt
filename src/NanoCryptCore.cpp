@@ -1,5 +1,5 @@
 /* 
- * NanoCrypt v0.3
+ * NanoCrypt v0.4
  * 
  * NanoCryptCore.cpp
  * 
@@ -19,10 +19,11 @@
 
 using namespace std;
 
+// This class implements the VMPC stream cipher
 class CryptoCore
 {
   private:
-    array<unsigned char, 256> ksa(unsigned char * key);
+    array<unsigned char, 256> ksa(unsigned char * key, unsigned char * iv, short keyLength, short ivLength);
     array<unsigned char, 256> mS;
     short mi;
     short mj;
@@ -31,16 +32,24 @@ class CryptoCore
   public:
     unsigned char nextByte();
 
-    CryptoCore(unsigned char * key)
+    CryptoCore(unsigned char * key, unsigned char * iv, short keyLength, short ivLength)
     {
       mi = 0;
       mj = 0;
-      mS = ksa(key);
+      mS = ksa(key, iv, keyLength, ivLength);
     }
 };
 
-//Sets the internal state from the key provided as a char array of length 32
-array<unsigned char, 256> CryptoCore::ksa(unsigned char * key)
+/**
+ * Sets the internal VMPC state array from a key and iv.
+ * 
+ * @param key A key between 16 and 64 bytes
+ * @param iv An iv between 16 and 64 bytes
+ * @param keyLength The number of bytes in the key
+ * @param ivLength The number of bytes in the iv
+ * @return The initialized state array
+ */
+array<unsigned char, 256> CryptoCore::ksa(unsigned char * key, unsigned char * iv, short keyLength, short ivLength)
 {
   array<unsigned char, 256> S;
 
@@ -51,18 +60,28 @@ array<unsigned char, 256> CryptoCore::ksa(unsigned char * key)
 
   short n;
 
-  for (short m = 0; m < 767; m++)
+  for (short m = 0; m < 768; m++)
   {
     n = m % 256;
-    mj = S[(mj + S[n] + key[m % 32]) % 256];
+    mj = S[(mj + S[n] + key[m % keyLength]) % 256];
+    swap(S[n], S[mj]);
+  }
+  
+  for (short m = 0; m < 768; m++)
+  {
+    n = m % 256;
+    mj = S[(mj + S[n] + iv[m % ivLength]) % 256];
     swap(S[n], S[mj]);
   }
 
   return S;
 }
 
-
-//Cycles the PRGA one round and returns the next keystream byte
+/**
+ * Cycles the PRGA one round and returns the next keystream byte.
+ * 
+ * @return The next byte in the keystream
+ */
 unsigned char CryptoCore::nextByte()
 {
   mj = mS[(mj + mS[mi]) % 256];
@@ -80,16 +99,29 @@ unsigned char CryptoCore::nextByte()
 int main( int argc, char *argv[])
 {
   int bufferSize = 4096;
+  short keyLength;
+  short ivLength;
 
-  if ( argc != 3)
+  // Validate parameters
+  if ( argc != 4)
   {
-    cerr << "usage: NanoCryptCore file key" << endl;
+    cerr << "usage: NanoCryptCore file key iv" << endl;
     return 1;
   }
+  
+  // Length is in bytes
+  keyLength = (short)strlen(argv[2]) / 2;
+  ivLength = (short)strlen(argv[3]) / 2;
 
-  if (strlen(argv[2]) != 64)
+  if (keyLength < 16 || keyLength > 64)
   {
-    cerr << "key is wrong size: " << strlen(argv[2]) << endl;
+    cerr << "key is invalid number of bytes: " << keyLength << endl;
+    return 1;
+  }
+  
+  if (ivLength < 16 || ivLength > 64)
+  {
+    cerr << "iv is invalid number of bytes: " << ivLength << endl;
     return 1;
   }
 
@@ -101,25 +133,34 @@ int main( int argc, char *argv[])
     return 1;
   }
 
-  unsigned char key[32];
+  unsigned char key[keyLength];
+  unsigned char iv[ivLength];
 
-  //Convert the key from a hexstring to a char array
-  char *pos = argv[2];
-  for(short i = 0; i < 32; i++)
+  // Convert the key and iv from a hexstring to a char array
+  char *posKey = argv[2];
+  char *posIv = argv[3];
+
+  for(short i = 0; i < keyLength; i++)
   {
-    sscanf(pos, "%2hhx", &key[i]);
-    pos += 2;
+    sscanf(posKey, "%2hhx", &key[i]);
+    posKey += 2;
+  }
+  
+  for(short i = 0; i < ivLength; i++)
+  {
+    sscanf(posIv, "%2hhx", &iv[i]);
+    posIv += 2;
   }
 
-  CryptoCore core = CryptoCore(key);
+  CryptoCore core = CryptoCore(key, iv, keyLength, ivLength);
 
-  //Drop the first 3072-bytes to prevent FMS attacks
+  // Drop the first 3072-bytes to prevent FMS attacks
   for (short i = 0; i < 3072; i++)
   {
     core.nextByte();
   }
 
-  //Start encrypting file  
+  // Start encrypting file  
   long fileSize = toEncrypt.tellg();
   int marker = 0;
   char* buffer = new char [bufferSize];
@@ -139,7 +180,7 @@ int main( int argc, char *argv[])
 
     marker += bufferSize;
 
-    //Handles the last partial buffer
+    // Handles the last partial buffer
     if ((fileSize - marker) < bufferSize)
     {
       bufferSize = fileSize - marker;
