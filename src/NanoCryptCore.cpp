@@ -129,6 +129,12 @@ int main( int argc, char *argv[])
     return 1;
   }
   
+  if ( strlen(argv[2])%2 != 0 || strlen(argv[3])%2 != 0)
+  {
+    cerr << "hex representations of key and iv should be multiples of 2" << endl;
+    return 1;
+  }
+  
   // Length is in bytes
   keyLength = (short)strlen(argv[2]) / 2;
   ivLength = (short)strlen(argv[3]) / 2;
